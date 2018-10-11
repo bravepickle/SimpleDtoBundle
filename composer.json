@@ -5,7 +5,8 @@
     "keywords": ["dto", "rest", "restful", "symfony", "serialization"],
     "type": "symfony-bundle",
     "authors": [
-        { "name": "Evgeniy Malykhin", "email": "55jeka@gmail.com" }
+        {"name": "Evgeniy Malykhin", "email": "55jeka@gmail.com"},
+        {"name": "bravepickle", "email": "2bravepickle@gmail.com"}
     ],
     "require": {
         "php": ">=7.1.0",
