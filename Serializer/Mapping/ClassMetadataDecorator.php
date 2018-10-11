@@ -6,10 +6,11 @@ namespace Mell\Bundle\SimpleDtoBundle\Serializer\Mapping;
 
 use Mell\Bundle\SimpleDtoBundle\Model\Relation;
 use Symfony\Component\Serializer\Mapping\AttributeMetadataInterface;
+use Symfony\Component\Serializer\Mapping\ClassDiscriminatorMapping;
 use Symfony\Component\Serializer\Mapping\ClassMetadataInterface;
 
 /**
- * Class ClassMetadata
+ * Class ClassMetadata  
  */
 class ClassMetadataDecorator implements ClassMetadataInterface
 {
@@ -21,6 +22,8 @@ class ClassMetadataDecorator implements ClassMetadataInterface
     protected $links = [];
     /** @var array */
     protected $relations = [];
+    /** @var ClassDiscriminatorMapping|null */
+    protected $dicriminatorMapping;
 
     /**
      * ClassMetadata constructor.
@@ -29,6 +32,22 @@ class ClassMetadataDecorator implements ClassMetadataInterface
     public function __construct(ClassMetadataInterface $decorated)
     {
         $this->decorated = $decorated;
+    }
+
+    public function getClassDiscriminatorMapping()
+    {
+        return $this->dicriminatorMapping;
+    }
+
+    /**
+     * @param ClassDiscriminatorMapping|null $mapping
+     * @return $this
+     */
+    public function setClassDiscriminatorMapping(ClassDiscriminatorMapping $mapping = null)
+    {
+        $this->dicriminatorMapping = $mapping;
+
+        return $this;
     }
 
     /**
