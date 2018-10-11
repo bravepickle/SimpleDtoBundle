@@ -1,5 +1,5 @@
 {
-    "name": "jekamell/simple-dto-bundle",
+    "name": "bravepickle/simple-dto-bundle",
     "description": "Allow to configure dto objects in easy way, and split persistence and representative application layers",
     "license": "MIT",
     "keywords": ["symfony", "bundle", "dto", "data transfer object", "rest", "restful", "serialization"],
