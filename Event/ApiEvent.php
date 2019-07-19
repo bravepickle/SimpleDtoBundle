@@ -8,6 +8,7 @@ use Symfony\Component\EventDispatcher\Event;
 
 /**
  * Class ApiEvent
+ * @package Mell\Bundle\SimpleDtoBundle\Event
  */
 class ApiEvent extends Event
 {

@@ -35,18 +35,6 @@ services:
     Mell\Bundle\SimpleDtoBundle\Services\ORM\ClassUtils: ~
     Mell\Bundle\SimpleDtoBundle\Services\Dto\DtoExpandsManager:
         autowire: true
-    # Api docs related services
-    Mell\Bundle\SimpleDtoBundle\Parser\ApiDocParser\DtoParser:
-        autowire: true
-        tags:
-            - { name: nelmio_api_doc.extractor.parser }
-#    Mell\Bundle\SimpleDtoBundle\Handler\ApiDocHandler\ApiDocHandler:
-#        autowire: true
-#        arguments:
-#            $hateoasEnabled: '%simple_dto.hateoas_enabled%'
-#        tags:
-#            - { name: nelmio_api_doc.extractor.handler }
-
     # Event listeners
     Mell\Bundle\SimpleDtoBundle\EventListener\DtoExpandsListener:
         autowire: true

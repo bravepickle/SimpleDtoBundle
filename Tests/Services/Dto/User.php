@@ -2,7 +2,9 @@
 
 namespace Mell\Bundle\SimpleDtoBundle\Tests\Services\Dto;
 
-class User
+use Mell\Bundle\SimpleDtoBundle\Model\DtoSerializableInterface;
+
+class User implements DtoSerializableInterface
 {
     private $id;
 

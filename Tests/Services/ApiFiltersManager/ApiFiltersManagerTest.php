@@ -6,13 +6,13 @@ use Mell\Bundle\SimpleDtoBundle\Model\ApiFilterCollection;
 use Mell\Bundle\SimpleDtoBundle\Model\ApiFilter;
 use Mell\Bundle\SimpleDtoBundle\Model\ApiFilterCollectionInterface;
 use Mell\Bundle\SimpleDtoBundle\Services\ApiFiltersManager\ApiFiltersManager;
-use Doctrine\Common\Collections\Criteria;
+use PHPUnit\Framework\TestCase;
 
 /**
  * Class ApiFiltersManagerTest
  * @package Mell\Bundle\SimpleDtoBundle\Tests\Services\ApiFiltersManager
  */
-class ApiFiltersManagerTest extends \PHPUnit_Framework_TestCase
+class ApiFiltersManagerTest extends TestCase
 {
     /**
      * @param string $filterStr

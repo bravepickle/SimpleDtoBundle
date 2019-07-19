@@ -5,12 +5,13 @@ namespace Mell\Bundle\SimpleDtoBundle\Tests\Model;
 use Mell\Bundle\SimpleDtoBundle\Model\ApiFilter;
 use Mell\Bundle\SimpleDtoBundle\Model\ApiFilterCollection;
 use Mell\Bundle\SimpleDtoBundle\Model\ApiFilterCollectionInterface;
+use PHPUnit\Framework\TestCase;
 
 /**
  * Class ApiFilterCollectionTest
  * @package Mell\Bundle\SimpleDtoBundle\Tests\Model
  */
-class ApiFilterCollectionTest extends \PHPUnit_Framework_TestCase
+class ApiFilterCollectionTest extends TestCase
 {
     /**
      * @param ApiFilterCollectionInterface $collection

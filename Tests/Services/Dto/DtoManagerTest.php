@@ -2,17 +2,15 @@
 
 namespace Mell\Bundle\SimpleDtoBundle\Tests\Services\Dto;
 
-use Mell\Bundle\SimpleDtoBundle\Helpers\DtoHelper;
 use Mell\Bundle\SimpleDtoBundle\Model\Dto;
 use Mell\Bundle\SimpleDtoBundle\Model\DtoInterface;
-use Mell\Bundle\SimpleDtoBundle\Model\DtoManagerConfigurator;
 use Mell\Bundle\SimpleDtoBundle\Services\Dto\DtoManager;
-use Mell\Bundle\SimpleDtoBundle\Services\Dto\DtoValidator;
-use Mell\Bundle\SimpleDtoBundle\Services\RequestManager\RequestManagerConfigurator;
-use Symfony\Component\Config\FileLocator;
+use PHPUnit\Framework\TestCase;
 use Symfony\Component\EventDispatcher\EventDispatcher;
+use Symfony\Component\Serializer\Normalizer\ObjectNormalizer;
+use Symfony\Component\Serializer\Serializer;
 
-class DtoManagerTest extends \PHPUnit_Framework_TestCase
+class DtoManagerTest extends TestCase
 {
     /**
      * @param User $entity
@@ -25,13 +23,12 @@ class DtoManagerTest extends \PHPUnit_Framework_TestCase
      */
     public function testCreateDto(User $entity, $dtoType, $group, array $fields, DtoInterface $expected)
     {
+        $serializer = new Serializer([new ObjectNormalizer()]);
         $manager = new DtoManager(
-            $this->getDtoValidator(),
-            $this->getDtoHelper(),
-            $this->getConfigurator(),
+            $serializer,
             new EventDispatcher()
         );
-        $dto = $manager->createDto($entity, $dtoType, $group, $fields, false);
+        $dto = $manager->createDto($entity, $group, $fields, false);
         $this->assertEquals($expected->getRawData(), $dto->getRawData());
     }
 
@@ -179,14 +176,9 @@ class DtoManagerTest extends \PHPUnit_Framework_TestCase
                 DtoInterface::DTO_GROUP_CREATE,
                 ['id', 'email', 'password'],
                 new Dto(
-                    $this->generateUser([
-                        'id' => 1,
-                        'addressId' => 1,
-                        'email' => 'mail@email.com',
-                        'firstname' => 'Ivan',
-                        'lastname' => 'Ivanov',
-                        'password' => 'password'
-                    ]), DtoInterface::DTO_GROUP_CREATE, [
+                    $this->generateUser(['id' => 1, 'addressId' => 1, 'email' => 'mail@email.com', 'firstname' => 'Ivan', 'lastname' => 'Ivanov', 'password' => 'password']),
+                    DtoInterface::DTO_GROUP_CREATE,
+                    [
                         'id' => 1,
                         'email' => 'mail@email.com',
                         'password' => 'password',
@@ -194,30 +186,6 @@ class DtoManagerTest extends \PHPUnit_Framework_TestCase
                 )
             ],
         ];
-    }
-
-    /**
-     * @return DtoHelper
-     */
-    private function getDtoHelper()
-    {
-        return new DtoHelper(new FileLocator(), __DIR__ . '/' . 'dto.yml', 'Y-m-d', 'c');
-    }
-
-    /**
-     * @return DtoValidator
-     */
-    private function getDtoValidator()
-    {
-        return new DtoValidator($this->getDtoHelper());
-    }
-
-    /**
-     * @return DtoManagerConfigurator
-     */
-    private function getConfigurator()
-    {
-        return new DtoManagerConfigurator('_collection', 'Y-m-d', 'c');
     }
 
     /**
@@ -246,7 +214,7 @@ class DtoManagerTest extends \PHPUnit_Framework_TestCase
     private function bindObjectParams($object, array $params)
     {
         foreach ($params as $param => $value) {
-            call_user_func([$object, $this->getDtoHelper()->getFieldSetter($param)], $value);
+            call_user_func([$object, 'set' . $param], $value);
         }
 
         return $object;

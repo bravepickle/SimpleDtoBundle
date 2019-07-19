@@ -5,12 +5,9 @@ declare(strict_types=1);
 namespace Mell\Bundle\SimpleDtoBundle\EventListener;
 
 use Mell\Bundle\SimpleDtoBundle\Model\ApiFilter;
-use Mell\Bundle\SimpleDtoBundle\Services\ApiFiltersManager\ApiFilterManagerInterface;
 use Mell\Bundle\SimpleDtoBundle\Services\ApiFiltersManager\ApiFiltersManager;
 use Mell\Bundle\SimpleDtoBundle\Services\RequestManager\RequestManager;
 use Symfony\Component\HttpKernel\Event\FilterControllerEvent;
-use Symfony\Component\HttpFoundation\Request;
-use Symfony\Bundle\FrameworkBundle\Routing\Router;
 use Symfony\Component\Routing\RouterInterface;
 
 /**
@@ -22,7 +19,7 @@ class ApiFiltersListener
 
     /** @var RequestManager */
     protected $requestManager;
-    /** @var ApiFilterManager */
+    /** @var ApiFiltersManager */
     protected $apiFilterManager;
     /** @var RouterInterface */
     protected $router;
@@ -30,7 +27,7 @@ class ApiFiltersListener
     /**
      * ApiFiltersListener constructor.
      * @param RequestManager $requestManager
-     * @param ApiFilterManager $apiFilterManager
+     * @param ApiFiltersManager $apiFilterManager
      * @param RouterInterface $router
      */
     public function __construct(
@@ -49,7 +46,7 @@ class ApiFiltersListener
     public function onKernelController(FilterControllerEvent $filterControllerArgumentsEvent): void
     {
         try {
-            $routeParams = $this->router->matchRequest($filterControllerArgumentsEvent->getRequest());
+            $routeParams = $this->router->match($filterControllerArgumentsEvent->getRequest());
         } catch (\Exception $e) {
             return;
         }

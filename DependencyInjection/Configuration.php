@@ -9,6 +9,7 @@ use Symfony\Component\Config\Definition\ConfigurationInterface;
 
 /**
  * Class Configuration
+ * @package Mell\Bundle\SimpleDtoBundle\DependencyInjection
  */
 class Configuration implements ConfigurationInterface
 {

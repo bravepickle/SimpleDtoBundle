@@ -72,10 +72,8 @@ Fields sections is a collection of blocks:
 | type        | Yes      | Property type                                                                                                   |
 | readonly    | No       | Whether the field is read only                                                                                  |
 | groups      | No       | The collection of groups where current fields is accessible                                                     |
-| required    | No       | Whether the fields is required (used for NelmioApiDoc highlight only)                                           |
 | getter      | No       | Field getter to access field value                                                                              |
 | setter      | No       | Field setter to assign field value                                                                              |
-| description | No       | Field description (used for NelmioApiDocBundle). The field name will be used in case when description is empty  |
 
 
 Expands section is collection of blocks:

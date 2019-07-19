@@ -4,6 +4,7 @@ namespace Mell\Bundle\SimpleDtoBundle\Tests\Services\RequestManager;
 
 use Mell\Bundle\SimpleDtoBundle\Services\RequestManager\RequestManager;
 use Mell\Bundle\SimpleDtoBundle\Services\RequestManager\RequestManagerConfigurator;
+use PHPUnit\Framework\TestCase;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestStack;
 
@@ -13,7 +14,7 @@ use Symfony\Component\HttpFoundation\RequestStack;
  * Class RequestManagerTest
  * @package Mell\Bundle\SimpleDtoBundle\Tests\Services\RequestManager
  */
-class RequestManagerTest extends \PHPUnit_Framework_TestCase
+class RequestManagerTest extends TestCase
 {
     const PARAM_FIELDS = '_fields';
     const PARAM_EXPANDS = '_expands';
@@ -34,7 +35,8 @@ class RequestManagerTest extends \PHPUnit_Framework_TestCase
      */
     public function testGetFields(RequestStack $stack, array $expected)
     {
-        $manager = new RequestManager($stack, $this->getConfigurator());
+        $manager = new RequestManager($stack);
+        $manager->setConfigurator($this->getConfigurator());
         $this->assertEquals($expected, $manager->getFields());
     }
 
@@ -46,7 +48,8 @@ class RequestManagerTest extends \PHPUnit_Framework_TestCase
      */
     public function testGetExpands(RequestStack $stack, array $expected)
     {
-        $manager = new RequestManager($stack, $this->getConfigurator());
+        $manager = new RequestManager($stack);
+        $manager->setConfigurator($this->getConfigurator());
         $this->assertEquals($expected, $manager->getExpands());
     }
 
@@ -58,7 +61,8 @@ class RequestManagerTest extends \PHPUnit_Framework_TestCase
      */
     public function testGetLimit(RequestStack $stack, $expected)
     {
-        $manager = new RequestManager($stack, $this->getConfigurator());
+        $manager = new RequestManager($stack);
+        $manager->setConfigurator($this->getConfigurator());
         $this->assertEquals($expected, $manager->getLimit());
     }
 
@@ -70,7 +74,8 @@ class RequestManagerTest extends \PHPUnit_Framework_TestCase
      */
     public function testGetOffset(RequestStack $stack, $expected)
     {
-        $manager = new RequestManager($stack, $this->getConfigurator());
+        $manager = new RequestManager($stack);
+        $manager->setConfigurator($this->getConfigurator());
         $this->assertEquals($expected, $manager->getOffset());
     }
 
@@ -82,7 +87,8 @@ class RequestManagerTest extends \PHPUnit_Framework_TestCase
      */
     public function testGetSort(RequestStack $stack, $expected)
     {
-        $manager = new RequestManager($stack, $this->getConfigurator());
+        $manager = new RequestManager($stack);
+        $manager->setConfigurator($this->getConfigurator());
         $this->assertEquals($expected, $manager->getSort());
     }
 
@@ -94,7 +100,8 @@ class RequestManagerTest extends \PHPUnit_Framework_TestCase
      */
     public function testGetLocale(RequestStack $stack, $expected)
     {
-        $manager = new RequestManager($stack, $this->getConfigurator());
+        $manager = new RequestManager($stack);
+        $manager->setConfigurator($this->getConfigurator());
         $this->assertEquals($expected, $manager->getLocale());
     }
 
