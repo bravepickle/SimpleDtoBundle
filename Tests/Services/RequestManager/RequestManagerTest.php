@@ -4,6 +4,7 @@ namespace Mell\Bundle\SimpleDtoBundle\Tests\Services\RequestManager;
 
 use Mell\Bundle\SimpleDtoBundle\Services\RequestManager\RequestManager;
 use Mell\Bundle\SimpleDtoBundle\Services\RequestManager\RequestManagerConfigurator;
+use PHPUnit\Framework\TestCase;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestStack;
 
@@ -13,7 +14,7 @@ use Symfony\Component\HttpFoundation\RequestStack;
  * Class RequestManagerTest
  * @package Mell\Bundle\SimpleDtoBundle\Tests\Services\RequestManager
  */
-class RequestManagerTest extends \PHPUnit_Framework_TestCase
+class RequestManagerTest extends TestCase
 {
     const PARAM_FIELDS = '_fields';
     const PARAM_EXPANDS = '_expands';

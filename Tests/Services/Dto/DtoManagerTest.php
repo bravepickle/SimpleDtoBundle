@@ -9,10 +9,11 @@ use Mell\Bundle\SimpleDtoBundle\Model\DtoManagerConfigurator;
 use Mell\Bundle\SimpleDtoBundle\Services\Dto\DtoManager;
 use Mell\Bundle\SimpleDtoBundle\Services\Dto\DtoValidator;
 use Symfony\Component\Cache\Adapter\NullAdapter;
+use PHPUnit\Framework\TestCase;
 use Symfony\Component\Config\FileLocator;
 use Symfony\Component\EventDispatcher\EventDispatcher;
 
-class DtoManagerTest extends \PHPUnit_Framework_TestCase
+class DtoManagerTest extends TestCase
 {
     /**
      * @param User $entity
