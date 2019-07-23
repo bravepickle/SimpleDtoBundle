@@ -7,7 +7,8 @@ namespace Mell\Bundle\SimpleDtoBundle\EventListener;
 use Mell\Bundle\SimpleDtoBundle\Model\ApiFilter;
 use Mell\Bundle\SimpleDtoBundle\Services\ApiFiltersManager\ApiFiltersManager;
 use Mell\Bundle\SimpleDtoBundle\Services\RequestManager\RequestManager;
-use Symfony\Component\HttpKernel\Event\FilterControllerEvent;
+use Symfony\Component\HttpKernel\Event\ControllerEvent;
+use Symfony\Component\Routing\Matcher\RequestMatcherInterface;
 use Symfony\Component\Routing\RouterInterface;
 
 /**
@@ -41,12 +42,16 @@ class ApiFiltersListener
     }
 
     /**
-     * @param FilterControllerEvent $filterControllerArgumentsEvent
+     * @param ControllerEvent $controllerEvent
      */
-    public function onKernelController(FilterControllerEvent $filterControllerArgumentsEvent): void
+    public function onKernelController(ControllerEvent $controllerEvent): void
     {
         try {
-            $routeParams = $this->router->match($filterControllerArgumentsEvent->getRequest());
+            if ($this->router instanceof RequestMatcherInterface) {
+                $routeParams = $this->router->matchRequest($controllerEvent->getRequest());
+            } else {
+                $routeParams = $this->router->match($controllerEvent->getRequest()->getPathInfo());
+            }
         } catch (\Exception $e) {
             return;
         }
@@ -61,6 +66,6 @@ class ApiFiltersListener
                 $filtersCollection->offsetUnset($i);
             }
         }
-        $filterControllerArgumentsEvent->getRequest()->attributes->set('apiFilters', $filtersCollection);
+        $controllerEvent->getRequest()->attributes->set('apiFilters', $filtersCollection);
     }
 }
