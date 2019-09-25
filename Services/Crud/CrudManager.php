@@ -213,7 +213,7 @@ class CrudManager
      * @param CrudActionOptions|null $options
      * @return CrudActionOptions
      */
-    public function initActionOptions(?CrudActionOptions $options): CrudActionOptions
+    public function initActionOptions(?CrudActionOptions $options = null): CrudActionOptions
     {
         if ($options) {
             return $options;
