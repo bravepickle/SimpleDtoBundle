@@ -14,10 +14,12 @@ use Mell\Bundle\SimpleDtoBundle\Model\DtoCollection;
 use Mell\Bundle\SimpleDtoBundle\Model\DtoInterface;
 use Mell\Bundle\SimpleDtoBundle\Event\ApiEvent;
 use Mell\Bundle\SimpleDtoBundle\Model\DtoSerializableInterface;
+use Mell\Bundle\SimpleDtoBundle\Model\Options\CrudActionOptions;
 use Mell\Bundle\SimpleDtoBundle\Services\Crud\CrudManager;
 use Mell\Bundle\SimpleDtoBundle\Services\Dto\DtoManager;
 use Mell\Bundle\SimpleDtoBundle\Services\RequestManager\RequestManager;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
+use Symfony\Component\EventDispatcher\EventDispatcher;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestStack;
@@ -88,48 +90,45 @@ abstract class AbstractController extends Controller
     /**
      * @param Request $request
      * @param DtoSerializableInterface $entity
-     * @param callable|null $accessChecker
+     * @param CrudActionOptions|null $options
      * @return DtoSerializableInterface|ConstraintViolationListInterface
-     * @throws \Doctrine\ORM\OptimisticLockException
      */
-    protected function createResource(Request $request, DtoSerializableInterface $entity, Callable $accessChecker = null)
+    protected function createResource(Request $request, DtoSerializableInterface $entity, ?CrudActionOptions $options = null)
     {
         if (!$data = $this->getSerializer()->decode($request->getContent(), $this->getInputFormat())) {
             throw new BadRequestHttpException('Malformed request data');
         }
 
-        return $this->getCrudManager()->createResource($entity, $data, $accessChecker);
+        return $this->getCrudManager()->createResource($entity, $data, $options);
     }
 
     /**
      * @param Request $request
      * @param DtoSerializableInterface $entity
-     * @param callable|null $accessChecker
+     * @param CrudActionOptions|null $options
      * @return DtoSerializableInterface|ConstraintViolationListInterface
-     * @throws \Doctrine\ORM\OptimisticLockException
      */
-    protected function updateResource(Request $request, DtoSerializableInterface $entity, Callable $accessChecker = null)
+    protected function updateResource(Request $request, DtoSerializableInterface $entity, ?CrudActionOptions $options = null)
     {
         if (!$data = $this->getSerializer()->decode($request->getContent(), $this->getInputFormat())) {
             throw new BadRequestHttpException('Malformed request data');
         }
 
-        return $this->getCrudManager()->updateResource($entity, $data, $accessChecker);
+        return $this->getCrudManager()->updateResource($entity, $data, $options);
     }
 
     /**
      * @param DtoSerializableInterface $entity
+     * @param CrudActionOptions|null $options
      * @return Dto
      */
-    protected function readResource(DtoSerializableInterface $entity): Dto
+    protected function readResource(DtoSerializableInterface $entity, ?CrudActionOptions $options = null): Dto
     {
-        return $this->getCrudManager()->readResource($entity);
+        return $this->getCrudManager()->readResource($entity, $options);
     }
 
     /**
      * @param DtoSerializableInterface $entity
-     * @throws \Doctrine\ORM\OptimisticLockException
-     * @throws \Doctrine\ORM\ORMException
      */
     protected function deleteResource(DtoSerializableInterface $entity): void
     {
@@ -139,14 +138,19 @@ abstract class AbstractController extends Controller
     /**
      * @param QueryBuilder $queryBuilder
      * @param ApiFilterCollectionInterface $filters
+     * @param CrudActionOptions|null $options
      * @return DtoCollection
      */
     protected function listResources(
         QueryBuilder $queryBuilder,
-        ApiFilterCollectionInterface $filters = null
+        ApiFilterCollectionInterface $filters = null,
+        ?CrudActionOptions $options = null
     ): DtoCollection {
+        $options = $this->getCrudManager()->initActionOptions($options);
+
         $event = new ApiEvent($queryBuilder, ApiEvent::ACTION_LIST, ['filters' => $filters]);
         $this->getEventDispatcher()->dispatch(ApiEvent::EVENT_PRE_COLLECTION_LOAD, $event);
+        $queryBuilder = $event->getData();
 
         $paginator = new Paginator($queryBuilder->getQuery());
         $collection = iterator_to_array($paginator);
@@ -156,10 +160,11 @@ abstract class AbstractController extends Controller
 
         $event = new ApiEvent($collection, ApiEvent::ACTION_LIST);
         $this->getEventDispatcher()->dispatch(ApiEvent::EVENT_POST_COLLECTION_LOAD, $event);
+        $collection = $event->getData();
 
         return $this->getDtoManager()->createDtoCollection(
             $collection,
-            DtoInterface::DTO_GROUP_READ,
+            $options->getDtoGroup(DtoInterface::DTO_GROUP_READ),
             $this->getRequestManager()->getFields(),
             $count ?? null
         );
@@ -227,7 +232,6 @@ abstract class AbstractController extends Controller
     /**
      * @param QueryBuilder $queryBuilder
      * @return int
-     * @throws \Doctrine\ORM\NoResultException
      * @throws \Doctrine\ORM\NonUniqueResultException
      */
     protected function getCollectionCount(QueryBuilder $queryBuilder): int
@@ -306,7 +310,7 @@ abstract class AbstractController extends Controller
     }
 
     /**
-     * @return EntityManager
+     * @return EntityManager|EntityManagerInterface
      */
     protected function getEntityManager(): EntityManager
     {
@@ -322,7 +326,7 @@ abstract class AbstractController extends Controller
     }
 
     /**
-     * @return EventDispatcherInterface
+     * @return EventDispatcherInterface|EventDispatcher
      */
     protected function getEventDispatcher(): EventDispatcherInterface
     {
@@ -338,7 +342,7 @@ abstract class AbstractController extends Controller
     }
 
     /**
-     * @return SerializerInterface
+     * @return SerializerInterface|Serializer
      */
     protected function getSerializer(): SerializerInterface
     {

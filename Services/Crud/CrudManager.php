@@ -4,17 +4,16 @@ declare(strict_types=1);
 
 namespace Mell\Bundle\SimpleDtoBundle\Services\Crud;
 
-use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\EntityManagerInterface;
 use Mell\Bundle\SimpleDtoBundle\Event\ApiEvent;
 use Mell\Bundle\SimpleDtoBundle\Model\Dto;
 use Mell\Bundle\SimpleDtoBundle\Model\DtoInterface;
 use Mell\Bundle\SimpleDtoBundle\Model\DtoSerializableInterface;
+use Mell\Bundle\SimpleDtoBundle\Model\Options\CrudActionOptions;
 use Mell\Bundle\SimpleDtoBundle\Services\Dto\DtoManager;
 use Mell\Bundle\SimpleDtoBundle\Services\RequestManager\RequestManager;
 use Symfony\Component\EventDispatcher\EventDispatcher;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
-use Symfony\Component\Serializer\Serializer;
 use Symfony\Component\Serializer\SerializerInterface;
 use Symfony\Component\Validator\ConstraintViolationListInterface;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
@@ -35,7 +34,7 @@ class CrudManager
     protected $validator;
     /** @var SerializerInterface */
     protected $serializer;
-    /** @var EventDispatcherInterface */
+    /** @var EventDispatcherInterface|EventDispatcher */
     protected $eventDispatcher;
     /** @var DtoManager */
     protected $dtoManager;
@@ -70,117 +69,131 @@ class CrudManager
     /**
      * @param DtoSerializableInterface $entity
      * @param array $data
-     * @param callable|null $accessChecker
-     * @param string $format @see self::FORMAT_JSON|self::FORMAT_XML
+     * @param null|CrudActionOptions $options
      * @return DtoSerializableInterface|ConstraintViolationListInterface
-     * @throws \Doctrine\ORM\OptimisticLockException
-     * @throws \Doctrine\ORM\ORMException
      */
     public function createResource(
         DtoSerializableInterface $entity,
         array $data,
-        Callable $accessChecker = null,
-        string $format = self::FORMAT_JSON
+        ?CrudActionOptions $options = null
     ) {
-        $event = new ApiEvent($entity, ApiEvent::ACTION_CREATE, ['group' => 'create']);
+        $options = $this->initActionOptions($options);
+        $event = new ApiEvent($entity, ApiEvent::ACTION_CREATE, [
+            'group' => $options->getDtoGroup(DtoInterface::DTO_GROUP_CREATE)
+        ]);
 
         $this->eventDispatcher->dispatch(ApiEvent::EVENT_PRE_DESERIALIZE, $event);
+        $entity = $event->getData(); // in case entity was changed
 
         $entity = $this->dtoManager->deserializeEntity(
             $entity,
-            $this->serializer->serialize($data, $format),
-            $format,
+            $this->serializer->serialize($data, $options->format),
+            $options->format,
             DtoInterface::DTO_GROUP_CREATE
         );
 
+        $event->setData($entity);
         $this->eventDispatcher->dispatch(ApiEvent::EVENT_POST_DESERIALIZE, $event);
+        $entity = $event->getData();
 
-        if ($accessChecker) {
-            call_user_func($accessChecker);
-        }
+        $options->runCallable($entity);
 
         $this->eventDispatcher->dispatch(ApiEvent::EVENT_PRE_VALIDATE, $event);
+        $entity = $event->getData();
 
-        $errors = $this->validator->validate($entity);
+        $errors = $this->validator->validate($entity, null, $options->validationGroups);
         if ($errors->count()) {
             return $errors;
         }
 
         $this->eventDispatcher->dispatch(ApiEvent::EVENT_PRE_PERSIST, $event);
+        $entity = $event->getData();
         $this->entityManager->persist($entity);
 
         $this->eventDispatcher->dispatch(ApiEvent::EVENT_PRE_FLUSH, $event);
         $this->entityManager->flush();
 
-        $event = new ApiEvent($entity, ApiEvent::ACTION_CREATE);
+        $event = new ApiEvent($event->getData(), ApiEvent::ACTION_CREATE);
         $this->eventDispatcher->dispatch(ApiEvent::EVENT_POST_FLUSH, $event);
+        $entity = $event->getData();
 
         return $entity;
     }
 
     /**
      * @param DtoSerializableInterface $entity
+     * @param null|CrudActionOptions $options
      * @return Dto
      */
-    public function readResource(DtoSerializableInterface $entity): Dto
+    public function readResource(DtoSerializableInterface $entity, ?CrudActionOptions $options = null): Dto
     {
+        $options = $this->initActionOptions($options);
+
         $event = new ApiEvent($entity, ApiEvent::ACTION_READ);
         $this->eventDispatcher->dispatch(ApiEvent::EVENT_POST_READ, $event);
+        $entity = $event->getData();
 
-        return $this->dtoManager->createDto($entity, DtoInterface::DTO_GROUP_READ, $this->requestManager->getFields());
+        return $this->dtoManager->createDto(
+            $entity,
+            $options->getDtoGroup(DtoInterface::DTO_GROUP_READ),
+            $this->requestManager->getFields()
+        );
     }
 
     /**
      * @param DtoSerializableInterface $entity
      * @param array $data
-     * @param callable|null $accessChecker
-     * @param string $format
+     * @param null|CrudActionOptions $options
      * @return DtoSerializableInterface|ConstraintViolationListInterface
-     * @throws \Doctrine\ORM\OptimisticLockException
-     * @throws \Doctrine\ORM\ORMException
      */
     public function updateResource(
         DtoSerializableInterface $entity,
         array $data,
-        Callable $accessChecker = null,
-        string $format = self::FORMAT_JSON
+        ?CrudActionOptions $options = null
     ) {
-        $event = new ApiEvent($entity, ApiEvent::ACTION_UPDATE, ['group' => 'update']);
+        $options = $this->initActionOptions($options);
+
+        $event = new ApiEvent($entity, ApiEvent::ACTION_UPDATE, [
+            'group' => $options->getDtoGroup(DtoInterface::DTO_GROUP_UPDATE)
+        ]);
 
         $this->eventDispatcher->dispatch(ApiEvent::EVENT_PRE_DESERIALIZE, $event);
+        $entity = $event->getData();
 
         $entity = $this->dtoManager->deserializeEntity(
             $entity,
-            $this->serializer->serialize($data, $format),
-            $format,
-            DtoInterface::DTO_GROUP_UPDATE
+            $this->serializer->serialize($data, $options->format),
+            $options->format,
+            $options->getDtoGroup(DtoInterface::DTO_GROUP_UPDATE)
         );
 
+        $event->setData($entity);
         $this->eventDispatcher->dispatch(ApiEvent::EVENT_POST_DESERIALIZE, $event);
+        $entity = $event->getData();
 
-        if ($accessChecker) {
-            call_user_func($accessChecker);
-        }
+        $options->runCallable($entity);
 
         $this->eventDispatcher->dispatch(ApiEvent::EVENT_PRE_VALIDATE, $event);
+        $entity = $event->getData();
 
-        $errors = $this->validator->validate($entity);
+        $errors = $this->validator->validate($entity, null, $options->validationGroups);
         if ($errors->count()) {
             return $errors;
         }
 
         $this->eventDispatcher->dispatch(ApiEvent::EVENT_PRE_FLUSH, $event);
         $this->entityManager->flush();
-        $event = new ApiEvent($entity, ApiEvent::ACTION_UPDATE);
+
+        $event = new ApiEvent($event->getData(), ApiEvent::ACTION_UPDATE);
+
         $this->eventDispatcher->dispatch(ApiEvent::EVENT_POST_FLUSH, $event);
+        $entity = $event->getData();
 
         return $entity;
     }
 
     /**
      * @param $entity
-     * @throws \Doctrine\ORM\OptimisticLockException
-     * @throws \Doctrine\ORM\ORMException
      */
     public function deleteResource($entity): void
     {
@@ -188,9 +201,24 @@ class CrudManager
 
         $event = new ApiEvent($entity, ApiEvent::ACTION_DELETE);
         $this->eventDispatcher->dispatch(ApiEvent::EVENT_PRE_FLUSH, $event);
+        $entity = $event->getData();
 
         $this->entityManager->flush();
         $event = new ApiEvent($entity, ApiEvent::ACTION_DELETE);
         $this->eventDispatcher->dispatch(ApiEvent::EVENT_POST_FLUSH, $event);
+    }
+
+    /**
+     * Initialize options
+     * @param CrudActionOptions|null $options
+     * @return CrudActionOptions
+     */
+    public function initActionOptions(?CrudActionOptions $options): CrudActionOptions
+    {
+        if ($options) {
+            return $options;
+        }
+
+        return new CrudActionOptions(); // options with defaults
     }
 }
