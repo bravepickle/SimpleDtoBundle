@@ -5,10 +5,9 @@ namespace Mell\Bundle\SimpleDtoBundle\CacheWarmer;
 use Doctrine\Common\Annotations\AnnotationException;
 use Mell\Bundle\SimpleDtoBundle\Serializer\Mapping\Factory\ClassMetadataFactory;
 use Psr\Cache\CacheItemPoolInterface;
-use Symfony\Component\Cache\Adapter\AdapterInterface;
 use Symfony\Component\Cache\Adapter\ArrayAdapter;
+use Symfony\Component\Cache\Adapter\NullAdapter;
 use Symfony\Component\Cache\Adapter\PhpArrayAdapter;
-use Symfony\Component\Cache\Adapter\ProxyAdapter;
 use Symfony\Component\HttpKernel\CacheWarmer\CacheWarmerInterface;
 use Symfony\Component\Serializer\Mapping\Factory\CacheClassMetadataFactory;
 use Symfony\Component\Serializer\Mapping\Loader\LoaderChain;
@@ -25,21 +24,19 @@ class SerializerCacheWarmer implements CacheWarmerInterface
 {
     private $loaders;
     private $phpArrayFile;
-    private $fallbackPool;
 
     /**
      * @param LoaderInterface[]      $loaders      The serializer metadata loaders
      * @param string                 $phpArrayFile The PHP file where metadata are cached
-     * @param CacheItemPoolInterface $fallbackPool The pool where runtime-discovered metadata are cached
      */
-    public function __construct(array $loaders, $phpArrayFile, CacheItemPoolInterface $fallbackPool)
+    public function __construct(array $loaders, $phpArrayFile)
     {
+        if (2 < \func_num_args() && func_get_arg(2) instanceof CacheItemPoolInterface) {
+            @trigger_error(sprintf('The CacheItemPoolInterface $fallbackPool argument of "%s()" is deprecated since Symfony 4.2, you should not pass it anymore.', __METHOD__), E_USER_DEPRECATED);
+        }
+
         $this->loaders = $loaders;
         $this->phpArrayFile = $phpArrayFile;
-        if (!$fallbackPool instanceof AdapterInterface) {
-            $fallbackPool = new ProxyAdapter($fallbackPool);
-        }
-        $this->fallbackPool = $fallbackPool;
     }
 
     /**
@@ -54,7 +51,7 @@ class SerializerCacheWarmer implements CacheWarmerInterface
             return;
         }
 
-        $adapter = new PhpArrayAdapter($this->phpArrayFile, $this->fallbackPool);
+        $adapter = new PhpArrayAdapter($this->phpArrayFile, new NullAdapter());
         $arrayPool = new ArrayAdapter(0, false);
 
         $metadataFactory = new CacheClassMetadataFactory(
@@ -80,12 +77,6 @@ class SerializerCacheWarmer implements CacheWarmerInterface
 
         $values = $arrayPool->getValues();
         $adapter->warmUp($values);
-
-        foreach ($values as $k => $v) {
-            $item = $this->fallbackPool->getItem($k);
-            $this->fallbackPool->saveDeferred($item->set($v));
-        }
-        $this->fallbackPool->commit();
     }
 
     /**
