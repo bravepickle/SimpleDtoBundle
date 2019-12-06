@@ -89,7 +89,7 @@ class CrudManager
             $entity,
             $this->serializer->serialize($data, $options->format),
             $options->format,
-            DtoInterface::DTO_GROUP_CREATE
+            $options->getDtoGroup(DtoInterface::DTO_GROUP_CREATE)
         );
 
         $event->setData($entity);
